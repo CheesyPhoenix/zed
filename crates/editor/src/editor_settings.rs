@@ -255,6 +255,8 @@ impl Settings for EditorSettings {
             horizontal_scroll_margin: editor.horizontal_scroll_margin.unwrap(),
             scroll_sensitivity: editor.scroll_sensitivity.unwrap(),
             fast_scroll_sensitivity: editor.fast_scroll_sensitivity.unwrap(),
+            smooth_scroll: editor.smooth_scroll.unwrap(),
+            smooth_scroll_duration: editor.smooth_scroll_duration.unwrap(),
             relative_line_numbers: editor.relative_line_numbers.unwrap(),
             seed_search_query_from_cursor: editor.seed_search_query_from_cursor.unwrap(),
             use_smartcase_search: editor.use_smartcase_search.unwrap(),

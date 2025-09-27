@@ -29,8 +29,8 @@ pub(crate) struct PersistentState {
 }
 
 pub(crate) struct Anim {
-    start: f32,
-    delta: f32,
+    pub start: f32,
+    pub delta: f32,
     destination_top_row: u32,
     destination_anchor: ScrollAnchor,
     start_moment: Instant,
@@ -46,6 +46,7 @@ impl Anim {
         workspace_id: Option<WorkspaceId>,
         local: bool,
         autoscroll: bool,
+        existing_delta: f32,
     ) -> Anim {
         let start = from.y;
         let end = destination_anchor.offset.y
@@ -54,7 +55,10 @@ impl Anim {
                 .to_display_point(&map)
                 .row()
                 .as_f32();
-        let delta = end - start;
+        let delta = end - start + existing_delta;
+
+        println!("{}", delta);
+
         Anim {
             start,
             delta,
@@ -72,7 +76,7 @@ impl Anim {
 }
 
 pub(crate) struct ScrollAnimationManager {
-    anim: Option<Anim>,
+    pub anim: Option<Anim>,
     scroll_duration: f32,
 }
 
@@ -143,7 +147,7 @@ impl ScrollAnimationManager {
             } else {
                 let new_scroll_top =
                     anim.start + (anim.delta * time_since_start / self.scroll_duration);
-
+                println!("new_scroll_top: {}", new_scroll_top);
                 let (intermediate_anchor, intermediate_top_row) =
                     self.make_final_results(new_scroll_top, &anim.state.map);
 

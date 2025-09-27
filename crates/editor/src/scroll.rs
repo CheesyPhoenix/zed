@@ -266,8 +266,8 @@ impl ScrollManager {
                 ref destination_anchor,
                 destination_top_row,
                 ref state,
-            } => Some((*destination_anchor, destination_top_row, state.clone())),
-            UpdateResponse::Nothing => None,
+            } => None,
+            UpdateResponse::Nothing => None, // TODO: Create correct anchor
         };
 
         if let Some((anchor, top_row, state)) = update_values {
@@ -297,6 +297,12 @@ impl ScrollManager {
     ) -> bool {
         let ret = if self.animation_manager.is_some() && self.ongoing.try_use_anim {
             let current = self.scroll_position(map);
+            let animation_manager = self.animation_manager.as_mut().unwrap();
+            let mut remaining_delta = 0.0;
+            if let Some(prev_anim) = animation_manager.anim.as_mut() {
+                remaining_delta = prev_anim.delta + prev_anim.start - current.y;
+            }
+
             let anim = Anim::new(
                 current,
                 top_row,
@@ -305,8 +311,9 @@ impl ScrollManager {
                 workspace_id,
                 local,
                 autoscroll,
+                remaining_delta,
             );
-            self.animation_manager.as_mut().unwrap().start(anim);
+            animation_manager.start(anim);
             cx.notify();
             true
         } else {
@@ -363,32 +370,35 @@ impl ScrollManager {
         let top_anchor = map
             .buffer_snapshot
             .anchor_at(scroll_top_buffer_point, Bias::Right);
+        let new_anchor = ScrollAnchor {
+            anchor: top_anchor,
+            offset: point(
+                scroll_position.x.max(0.),
+                scroll_top - top_anchor.to_display_point(map).row().as_f32(),
+            ),
+        };
 
         if !self.try_start_anim(
             new_anchor,
-            top_row,
+            scroll_top_buffer_point.row,
             map,
             local,
             autoscroll,
             workspace_id,
             cx,
         ) {
-            self.set_anchor(
-                ScrollAnchor {
-                    anchor: top_anchor,
-                    offset: point(
-                        scroll_position.x.max(0.),
-                        scroll_top - top_anchor.to_display_point(map).row().as_f32(),
-                    ),
-                },
+            return self.set_anchor(
+                new_anchor,
                 scroll_top_buffer_point.row,
                 local,
                 autoscroll,
                 workspace_id,
                 window,
                 cx,
-            )
-        }
+            );
+        } else {
+            return WasScrolled(true);
+        };
     }
 
     fn set_anchor(

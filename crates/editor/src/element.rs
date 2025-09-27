@@ -7083,7 +7083,6 @@ impl EditorElement {
 
                         let line_height = position_map.line_height;
                         let max_glyph_advance = position_map.em_advance;
-                        let max_glyph_width = position_map.em_width;
                         let mut try_use_anim = true;
                         let (delta, axis) = match delta {
                             gpui::ScrollDelta::Pixels(mut pixels) => {
@@ -8526,19 +8525,18 @@ impl Element for EditorElement {
                                 window,
                                 cx,
                             );
-                        if was_scrolled.0 {
+
+                        if editor.scroll_manager.requires_animation_update() {
                             snapshot = editor.snapshot(window, cx);
 
-                            if editor.scroll_manager.requires_animation_update() {
-                                let update_response =
-                                    editor.scroll_manager.update_animation(window, cx);
-                                match update_response {
-                                    UpdateResponse::RequiresAnimationFrame { .. } => {
-                                        window.request_animation_frame();
-                                    }
-                                    _ => (),
-                                };
-                            }
+                            let update_response =
+                                editor.scroll_manager.update_animation(window, cx);
+                            match update_response {
+                                UpdateResponse::RequiresAnimationFrame { .. } => {
+                                    window.request_animation_frame();
+                                }
+                                _ => (),
+                            };
                         }
                         (
                             autoscroll_request,

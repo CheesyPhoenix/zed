@@ -588,9 +588,9 @@
   // happens when a user holds the alt or option key while scrolling.
   "fast_scroll_sensitivity": 4.0,
   // Whether to scroll smoothly or instantaneously
-  "smooth_scroll": false,
+  "smooth_scroll": true,
   // How much time in seconds it takes for a scrolling when smooth_scroll is enabled
-  "smooth_scroll_duration": 0.25,
+  "smooth_scroll_duration": 0.1,
   "relative_line_numbers": false,
   // If 'search_wrap' is disabled, search result do not wrap around the end of the file.
   "search_wrap": true,

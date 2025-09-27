@@ -91,6 +91,14 @@ pub struct EditorSettingsContent {
     ///
     /// Default: 4.0
     pub fast_scroll_sensitivity: Option<f32>,
+    /// Whether to use smooth scrolling.
+    ///
+    /// Default: true
+    pub smooth_scroll: Option<bool>,
+    /// Duration of smooth scrolling in seconds.
+    ///
+    /// Default: 0.1
+    pub smooth_scroll_duration: Option<f32>,
     /// Whether the line numbers on editors gutter are relative or not.
     ///
     /// Default: false
