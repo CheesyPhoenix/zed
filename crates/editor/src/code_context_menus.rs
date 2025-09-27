@@ -827,6 +827,39 @@ impl CompletionsMenu {
                         let completion_label = StyledText::new(completion.label.text.clone())
                             .with_default_highlights(&style.text, highlights);
 
+                        let completion_icon = match completion.kind() {
+                            Some(CompletionItemKind::REFERENCE) => Icon::new(IconName::FileInput),
+                            Some(CompletionItemKind::METHOD) => Icon::new(IconName::Box),
+                            Some(CompletionItemKind::FUNCTION) => Icon::new(IconName::Box),
+                            Some(CompletionItemKind::CONSTRUCTOR) => Icon::new(IconName::Box),
+                            Some(CompletionItemKind::FIELD) => Icon::new(IconName::Tag),
+                            Some(CompletionItemKind::VARIABLE) => Icon::new(IconName::Variable),
+                            Some(CompletionItemKind::CLASS) => Icon::new(IconName::Shapes),
+                            Some(CompletionItemKind::INTERFACE) => Icon::new(IconName::Network),
+                            Some(CompletionItemKind::MODULE) => Icon::new(IconName::Package),
+                            Some(CompletionItemKind::PROPERTY) => Icon::new(IconName::Tag),
+                            Some(CompletionItemKind::UNIT) => Icon::new(IconName::Ruler),
+                            Some(CompletionItemKind::VALUE) => Icon::new(IconName::Binary),
+                            Some(CompletionItemKind::ENUM) => Icon::new(IconName::ArrowDownAZ),
+                            Some(CompletionItemKind::KEYWORD) => Icon::new(IconName::KeyRound),
+                            Some(CompletionItemKind::SNIPPET) => {
+                                Icon::new(IconName::ChevronsLeftRight)
+                            }
+                            Some(CompletionItemKind::COLOR) => Icon::new(IconName::Palette),
+                            Some(CompletionItemKind::FILE) => Icon::new(IconName::File),
+                            Some(CompletionItemKind::FOLDER) => Icon::new(IconName::Folder),
+                            Some(CompletionItemKind::ENUM_MEMBER) => {
+                                Icon::new(IconName::ArrowDownAZ)
+                            }
+                            Some(CompletionItemKind::CONSTANT) => Icon::new(IconName::Pi),
+                            Some(CompletionItemKind::STRUCT) => Icon::new(IconName::Shapes),
+                            Some(CompletionItemKind::EVENT) => Icon::new(IconName::Zap),
+                            Some(CompletionItemKind::OPERATOR) => Icon::new(IconName::Percent),
+                            Some(CompletionItemKind::TYPE_PARAMETER) => Icon::new(IconName::Type),
+                            Some(CompletionItemKind::TEXT) => Icon::new(IconName::ALargeSmall),
+                            _ => Icon::new(IconName::ALargeSmall),
+                        };
+
                         let documentation_label = match documentation {
                             Some(CompletionDocumentation::SingleLine(text))
                             | Some(CompletionDocumentation::SingleLineAndMultiLinePlainText {
@@ -883,7 +916,13 @@ impl CompletionsMenu {
                                     }
                                 }))
                                 .start_slot::<AnyElement>(start_slot)
-                                .child(h_flex().overflow_hidden().child(completion_label))
+                                .child(
+                                    h_flex()
+                                        .overflow_hidden()
+                                        .gap_1()
+                                        .child(completion_icon.color(Color::Muted))
+                                        .child(completion_label),
+                                )
                                 .end_slot::<Label>(documentation_label),
                         )
                     })
