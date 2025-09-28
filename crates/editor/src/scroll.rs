@@ -146,6 +146,13 @@ impl ActiveScrollbarState {
     }
 }
 
+#[derive(Debug)]
+struct AnimationState {
+    start_time: Instant,
+    start_value: f32,
+    end_value: f32,
+}
+
 pub struct ScrollManager {
     pub(crate) vertical_scroll_margin: f32,
     anchor: ScrollAnchor,
@@ -162,6 +169,7 @@ pub struct ScrollManager {
     visible_column_count: Option<f32>,
     forbid_vertical_scroll: bool,
     minimap_thumb_state: Option<ScrollbarThumbState>,
+    animation_state: Option<AnimationState>,
 }
 
 impl ScrollManager {
@@ -179,6 +187,7 @@ impl ScrollManager {
             visible_column_count: None,
             forbid_vertical_scroll: false,
             minimap_thumb_state: None,
+            animation_state: None,
         }
     }
 
@@ -204,7 +213,7 @@ impl ScrollManager {
         self.anchor.scroll_position(snapshot)
     }
 
-    fn set_scroll_position(
+    fn _set_scroll_position(
         &mut self,
         scroll_position: gpui::Point<f32>,
         map: &DisplaySnapshot,
@@ -263,6 +272,121 @@ impl ScrollManager {
             window,
             cx,
         )
+    }
+
+    fn set_scroll_position(
+        &mut self,
+        scroll_position: gpui::Point<f32>,
+        map: &DisplaySnapshot,
+        local: bool,
+        autoscroll: bool,
+        workspace_id: Option<WorkspaceId>,
+        window: &mut Window,
+        cx: &mut Context<Editor>,
+    ) -> WasScrolled {
+        let mut scroll_top = scroll_position.y.max(0.);
+        if !autoscroll {
+            match self.animation_state.as_ref() {
+                Some(animation_state) => {
+                    let requested_delta = scroll_top - self.scroll_position(map).y;
+                    scroll_top = animation_state.end_value + requested_delta;
+                }
+                _ => (),
+            };
+        }
+
+        let scroll_top = match EditorSettings::get_global(cx).scroll_beyond_last_line {
+            ScrollBeyondLastLine::OnePage => {
+                let max_row = map.max_point().row().0 as f32;
+                scroll_top.min(max_row + 1.).max(0.)
+            }
+            ScrollBeyondLastLine::Off => {
+                if let Some(height_in_lines) = self.visible_line_count {
+                    let max_row = map.max_point().row().0 as f32;
+                    scroll_top.min(max_row - height_in_lines + 1.).max(0.)
+                } else {
+                    scroll_top
+                }
+            }
+            ScrollBeyondLastLine::VerticalScrollMargin => {
+                if let Some(height_in_lines) = self.visible_line_count {
+                    let max_row = map.max_point().row().0 as f32;
+                    scroll_top
+                        .min(max_row - height_in_lines + 1. + self.vertical_scroll_margin)
+                        .max(0.)
+                } else {
+                    scroll_top
+                }
+            }
+        };
+
+        if self.scroll_position(map).y != scroll_top {
+            match self.animation_state.as_ref() {
+                Some(animation_state) => {
+                    if (animation_state.end_value - scroll_top).abs() < 1.0 {
+                        self.animation_state = Some(AnimationState {
+                            start_value: animation_state.start_value,
+                            end_value: scroll_top,
+                            start_time: animation_state.start_time,
+                        });
+                        return WasScrolled(false);
+                    }
+                }
+                _ => (),
+            }
+
+            self.animation_state = Some(AnimationState {
+                start_value: self.scroll_position(map).y,
+                end_value: scroll_top,
+                start_time: Instant::now(),
+            });
+            return WasScrolled(true);
+        }
+        return WasScrolled(false);
+    }
+
+    pub fn update_animation(
+        &mut self,
+        snapshot: &DisplaySnapshot,
+        window: &mut Window,
+        cx: &mut Context<Editor>,
+    ) {
+        if let Some(animation_state) = self.animation_state.as_ref() {
+            let current_position = self.scroll_position(snapshot);
+            let now = Instant::now();
+            if (now - animation_state.start_time).as_secs_f32() > 0.1 {
+                self._set_scroll_position(
+                    point(current_position.x, animation_state.end_value),
+                    snapshot,
+                    true,  // TODO
+                    false, // TODO
+                    None,  // TODO
+                    window,
+                    cx,
+                );
+
+                self.animation_state = None;
+                return;
+            }
+
+            let new_y = (animation_state.end_value - animation_state.start_value)
+                * (now - animation_state.start_time).as_secs_f32()
+                / 0.1
+                + animation_state.start_value;
+
+            println!("Animation state: {:?}", animation_state);
+            println!("New Y: {}", new_y);
+
+            self._set_scroll_position(
+                point(current_position.x, new_y),
+                snapshot,
+                true,  // TODO
+                false, // TODO
+                None,  // TODO
+                window,
+                cx,
+            );
+        }
     }
 
     fn set_anchor(

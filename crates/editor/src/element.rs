@@ -8521,9 +8521,14 @@ impl Element for EditorElement {
                                 window,
                                 cx,
                             );
-                        if was_scrolled.0 {
-                            snapshot = editor.snapshot(window, cx);
-                        }
+
+                        editor
+                            .scroll_manager
+                            .update_animation(&snapshot, window, cx);
+
+                        // if was_scrolled.0 {
+                        // }
+                        snapshot = editor.snapshot(window, cx);
                         (
                             autoscroll_request,
                             autoscroll_containing_element,
