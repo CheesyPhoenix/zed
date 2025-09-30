@@ -332,7 +332,7 @@ impl ScrollManager {
                         return WasScrolled(false);
                     }
                 }
-                _ => (),
+                _ => window.refresh(),
             }
 
             self.animation_state = Some(AnimationState {
@@ -374,8 +374,8 @@ impl ScrollManager {
                 / 0.1
                 + animation_state.start_value;
 
-            println!("Animation state: {:?}", animation_state);
-            println!("New Y: {}", new_y);
+            // println!("Animation state: {:?}", animation_state);
+            // println!("New Y: {}", new_y);
 
             self._set_scroll_position(
                 point(current_position.x, new_y),
@@ -386,6 +386,8 @@ impl ScrollManager {
                 window,
                 cx,
             );
+
+            window.request_animation_frame();
         }
     }
 
